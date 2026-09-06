@@ -25,7 +25,9 @@ str(dados_sim)
 # Tarefa 2. Reduzir dados_sim apenas para as colunas que serão utilizadas, nomeando este novo banco de dados como dados_sim_1
 # As colunas serão: 1, 3, 9, 10, 11, 14, 17, 35, 47
 # Nomes das respectivas variáveis: CONTADOR, TIPOBITO, IDADE, SEXO, RACACOR, ESC2010, CODMUNRES, TPMORTEOCO, CAUSABAS
-
+dados_sim_1 <- dados_sim[c(1, 3, 9, 10, 11, 14, 17, 35, 47)]
+names(dados_sim_1)
+dim(dados_sim_1)
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - SIM - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
