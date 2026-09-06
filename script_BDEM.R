@@ -74,7 +74,15 @@ table(unidade_idade, useNA = "ifany")
 # geralmente com código 9
 # Verifique o dicionário do SIM para identificar qual o código das categorias de cada variável
 # Em variáveis quantitativas como IDADE verificar se existem valores como 9999 para NA
-
+dados_sim_2$SEXO[dados_sim_2$SEXO %in% c(0, 9)] <- NA
+dados_sim_2$ESC2010[dados_sim_2$ESC2010 == 9] <- NA
+dados_sim_2$TPMORTEOCO[dados_sim_2$TPMORTEOCO == 9] <- NA
+dados_sim_2$IDADE[dados_sim_2$IDADE == 999] <- NA
+table(dados_sim_2$TIPOBITO, useNA = "ifany")
+table(dados_sim_2$SEXO, useNA = "ifany")
+table(dados_sim_2$RACACOR, useNA = "ifany")
+table(dados_sim_2$ESC2010, useNA = "ifany")
+table(dados_sim_2$TPMORTEOCO, useNA = "ifany")
 
 # Ao terminar a Tarefa 5 commit com a mensagem "script BDEM - SIM - tarefas 1 a 5" e envie para o repositório Projeto_BDEM_2016
 
