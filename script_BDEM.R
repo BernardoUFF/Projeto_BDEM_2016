@@ -16,7 +16,7 @@
 # Tarefa 1. Leitura do banco de dados SIM_2016 com 1309774 linhas e 87 colunas com o nome de dados_sim
 # Verificar se a leitura foi feita corretamente e a estrutura dos dados
 dados_sim<-read.csv("SIM_2016.csv", sep = ";", header = TRUE)
-dim(dados_sim)
+head(dados_sim)
 str(dados_sim)
 
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SIM - tarefa 1" e envie para o repositório Projeto_BDEM_2016
@@ -27,7 +27,7 @@ str(dados_sim)
 # Nomes das respectivas variáveis: CONTADOR, TIPOBITO, IDADE, SEXO, RACACOR, ESC2010, CODMUNRES, TPMORTEOCO, CAUSABAS
 dados_sim_1 <- dados_sim[c(1, 3, 9, 10, 11, 14, 17, 35, 47)]
 names(dados_sim_1)
-dim(dados_sim_1)
+summary(dados_sim_1)
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - SIM - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
@@ -43,9 +43,10 @@ dim(dados_sim_1)
 # 31:135257    32:22868    33:141089   35:296359
 # 41:74740     42:40270    43:87583
 # 50:16749     51:17535    52:38074    53:12050 
-uf_res <- substr(as.character(dados_sim_1$CODMUNRES), 1, 2)
-dados_sim_2<- dados_sim_1[uf_res == "13", ]
-nrow(dados_sim_2)
+summary(dados_sim_1$CODMUNRES)
+UF <- substr(as.character(dados_sim_1$CODMUNRES), 1, 2)
+dados_sim_2<- dados_sim_1[UF == "13", ]
+
 
 # Ao terminar a Tarefa 3 commit com a mensagem "script BDEM - SIM - tarefas 1 a 3" e envie para o repositório Projeto_BDEM_2016
 
@@ -56,16 +57,14 @@ nrow(dados_sim_2)
 # Unidades de medida a serem consideradas em IDADE: 0: minutos, 1: horas, 2: dias, 3: meses, 4: anos, 5: idade maior que 100 anos
 # Atenção: a unidade de medida de IDADE no DICIONÀRIO do SIM está errada
 # O propósito das avaliações acima é verificar se as categorias estão de acordo com o dicionário do SIM ou se aparecem categorias estranhas
-table(dados_sim_2$TIPOBITO, useNA = "ifany")
-table(dados_sim_2$SEXO, useNA = "ifany")
-table(dados_sim_2$RACACOR, useNA = "ifany")
-table(dados_sim_2$ESC2010, useNA = "ifany")
-table(dados_sim_2$TPMORTEOCO, useNA = "ifany")
-table(dados_sim_2$CAUSABAS, useNA = "ifany")
-table(dados_sim_2$IDADE, useNA= "ifany")
-sort(unique(dados_sim_2$IDADE))
-unidade_idade <- substr(as.character(dados_sim_2$IDADE), 1, 1)
-table(unidade_idade, useNA = "ifany")
+table(dados_sim_2$TIPOBITO)
+table(dados_sim_2$SEXO)
+table(dados_sim_2$RACACOR)
+table(dados_sim_2$ESC2010)
+table(dados_sim_2$TPMORTEOCO)
+table(dados_sim_2$CAUSABAS)
+table(dados_sim_2$IDADE)
+summary(dados_sim_2$IDADE)
 
 # Ao terminar a Tarefa 4 commit com a mensagem "script BDEM - SIM - tarefas 1 a 4" e envie para o repositório Projeto_BDEM_2016
 
@@ -74,15 +73,11 @@ table(unidade_idade, useNA = "ifany")
 # geralmente com código 9
 # Verifique o dicionário do SIM para identificar qual o código das categorias de cada variável
 # Em variáveis quantitativas como IDADE verificar se existem valores como 9999 para NA
-dados_sim_2$SEXO[dados_sim_2$SEXO %in% c(0, 9)] <- NA
-dados_sim_2$ESC2010[dados_sim_2$ESC2010 == 9] <- NA
-dados_sim_2$TPMORTEOCO[dados_sim_2$TPMORTEOCO == 9] <- NA
-dados_sim_2$IDADE[dados_sim_2$IDADE == 999] <- NA
-table(dados_sim_2$TIPOBITO, useNA = "ifany")
-table(dados_sim_2$SEXO, useNA = "ifany")
-table(dados_sim_2$RACACOR, useNA = "ifany")
-table(dados_sim_2$ESC2010, useNA = "ifany")
-table(dados_sim_2$TPMORTEOCO, useNA = "ifany")
+dados_sim_2$SEXO[dados_sim_2$SEXO == 0] = NA
+dados_sim_2$ESC2010[dados_sim_2$ESC2010 == 9] = NA
+dados_sim_2$TPMORTEOCO[dados_sim_2$TPMORTEOCO == 9] = NA
+
+dados_sim_2$IDADE[dados_sim_2$IDADE == 999] = NA
 
 # Ao terminar a Tarefa 5 commit com a mensagem "script BDEM - SIM - tarefas 1 a 5" e envie para o repositório Projeto_BDEM_2016
 
