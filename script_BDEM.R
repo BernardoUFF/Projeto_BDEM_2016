@@ -136,11 +136,123 @@ dados_sim_2$CAUSABAS <- factor(dados_sim_2$CAUSABAS)
 # Tarefa 7. Criar um banco de dados, de nome SIM_UF.csv (Exemplo: SIM_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 7 - SIM.pdf”
 # Atenção: a ordem das variáveis do arquivo deve ser respeitada
 
+# Indicador de registro completo nas 87 variáveis originais do SIM (mesmas linhas de dados_sim_2)
+# complete.cases() é a função padrão do R para identificar, de uma só vez, as linhas sem nenhum NA entre várias colunas
+TORC_i <- ifelse(complete.cases(dados_sim[UF == "13", ]), 1, 0)
+
+# Indicador de registro completo nas variáveis selecionadas na Tarefa 2, já com as recodificações de NA da Tarefa 5
+TORCR_i <- ifelse(complete.cases(dados_sim_2[, c("TIPOBITO","IDADE","SEXO","RACACOR","ESC2010","TPMORTEOCO","CAUSABAS")]), 1, 0)
+
+# Decodificação de IDADE: 1o dígito = unidade (0 minuto, 1 hora, 2 dia, 3 mês, 4 ano, 5 idade > 100 anos), 2 últimos dígitos = quantidade
+# Usa-se %/% e %% (divisão inteira e resto) em vez de substr(), pois o dígito da unidade se perderia quando é 0
+unidade_idade <- dados_sim_2$IDADE %/% 100
+valor_idade <- dados_sim_2$IDADE %% 100
+
+# Classificação da causa básica (CAUSABAS) em causa externa (CID-10 V01-Y98) e capítulos de causa natural
+causa <- as.character(dados_sim_2$CAUSABAS)
+letra_causa <- substr(causa, 1, 1)
+num_causa <- as.numeric(substr(causa, 2, 3))
+causa_valida <- !is.na(dados_sim_2$CAUSABAS)
+
+TO_NN_i <- ifelse(causa_valida & (letra_causa == "V" | letra_causa == "W" | letra_causa == "X" |
+                                   (letra_causa == "Y" & !is.na(num_causa) & num_causa <= 98)), 1, 0)
+TO_N_i  <- ifelse(causa_valida & TO_NN_i == 0, 1, 0)
+TO_CB_I_i <- ifelse(TO_N_i == 1 & (letra_causa == "A" | letra_causa == "B"), 1, 0)
+TO_CB_N_i <- ifelse(TO_N_i == 1 & (letra_causa == "C" |
+                                    (letra_causa == "D" & !is.na(num_causa) & (num_causa <= 48 | (num_causa >= 50 & num_causa <= 89)))), 1, 0)
+TO_CB_C_i <- ifelse(TO_N_i == 1 & letra_causa == "I", 1, 0)
+TO_CB_R_i <- ifelse(TO_N_i == 1 & letra_causa == "J", 1, 0)
+TO_CB_O_i <- ifelse(TO_N_i == 1 & TO_CB_I_i == 0 & TO_CB_N_i == 0 & TO_CB_C_i == 0 & TO_CB_R_i == 0, 1, 0)
+
+TO_M_i <- ifelse(!is.na(dados_sim_2$SEXO) & dados_sim_2$SEXO == "Masculino", 1, 0)
+TO_F_i <- ifelse(!is.na(dados_sim_2$SEXO) & dados_sim_2$SEXO == "Feminino", 1, 0)
+TO_F_IF_i <- ifelse(TO_F_i == 1 & !is.na(unidade_idade) & unidade_idade == 4 & valor_idade >= 15 & valor_idade <= 49, 1, 0)
+
+TO_FT_i <- ifelse(!is.na(dados_sim_2$TIPOBITO) & dados_sim_2$TIPOBITO == "Fetal", 1, 0)
+
+TO_NT_i   <- ifelse(!is.na(unidade_idade) & (unidade_idade == 0 | unidade_idade == 1 | (unidade_idade == 2 & valor_idade <= 27)), 1, 0)
+TO_NT_P_i <- ifelse(!is.na(unidade_idade) & (unidade_idade == 0 | unidade_idade == 1 | (unidade_idade == 2 & valor_idade <= 6)), 1, 0)
+TO_NT_T_i <- ifelse(!is.na(unidade_idade) & unidade_idade == 2 & valor_idade >= 7 & valor_idade <= 27, 1, 0)
+TO_PNT_i  <- ifelse(!is.na(unidade_idade) & ((unidade_idade == 2 & valor_idade >= 28) | unidade_idade == 3), 1, 0)
+
+TONT_B_i  <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Branca", 1, 0)
+TONT_PT_i <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Preta", 1, 0)
+TONT_A_i  <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Amarela", 1, 0)
+TONT_PD_i <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Parda", 1, 0)
+TONT_I_i  <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Indígena", 1, 0)
+
+TO_MT_DG_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "Na gravidez", 1, 0)
+TO_MT_PT_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "No parto", 1, 0)
+TO_MT_AB_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "No abortamento", 1, 0)
+TO_MT_42_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "Até 42 dias após o término do parto", 1, 0)
+TO_MT_43_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "De 43 dias a 1 ano após o término da gestação", 1, 0)
+TO_MT_i    <- ifelse(TO_MT_DG_i == 1 | TO_MT_PT_i == 1 | TO_MT_AB_i == 1 | TO_MT_42_i == 1 | TO_MT_43_i == 1, 1, 0)
+TO_MT_P_i  <- ifelse(TO_MT_DG_i == 1 | TO_MT_PT_i == 1 | TO_MT_AB_i == 1 | TO_MT_42_i == 1, 1, 0)
+
+TO_MT_P_I_i    <- ifelse(TO_MT_P_i == 1 & !is.na(unidade_idade) & unidade_idade == 4 & valor_idade >= 15 & valor_idade <= 49, 1, 0)
+TO_MT_P_ES_i   <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Sem escolaridade", 1, 0)
+TO_MT_P_EFI_i  <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Fundamental I", 1, 0)
+TO_MT_P_EFII_i <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Fundamental II", 1, 0)
+TO_MT_P_EM_i   <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Médio", 1, 0)
+TO_MT_P_ESI_i  <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Superior incompleto", 1, 0)
+TO_MT_P_ESC_i  <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Superior completo", 1, 0)
+
+# Banco com um indicador (0/1) por óbito para cada variável a ser somada, com CODMUNRES (município) e COD_UF
+# (igual para todas as linhas, pois todo o banco já é de uma só UF) como colunas de agrupamento do aggregate()
+indicadores <- data.frame(
+  CODMUNRES = dados_sim_2$CODMUNRES,
+  COD_UF = 13,
+  TO = 1, TORC = TORC_i, TORCR = TORCR_i,
+  TO_NN = TO_NN_i, TO_N = TO_N_i, TO_CB_I = TO_CB_I_i, TO_CB_N = TO_CB_N_i,
+  TO_CB_C = TO_CB_C_i, TO_CB_R = TO_CB_R_i, TO_CB_O = TO_CB_O_i,
+  TO_M = TO_M_i, TO_F = TO_F_i, TO_F_IF = TO_F_IF_i,
+  TO_FT = TO_FT_i, TO_NT = TO_NT_i, TO_NT_P = TO_NT_P_i, TO_NT_T = TO_NT_T_i, TO_PNT = TO_PNT_i,
+  TONT_B = TONT_B_i, TONT_PT = TONT_PT_i, TONT_A = TONT_A_i, TONT_PD = TONT_PD_i, TONT_I = TONT_I_i,
+  TO_MT = TO_MT_i, TO_MT_DG = TO_MT_DG_i, TO_MT_PT = TO_MT_PT_i, TO_MT_AB = TO_MT_AB_i,
+  TO_MT_42 = TO_MT_42_i, TO_MT_43 = TO_MT_43_i, TO_MT_P = TO_MT_P_i,
+  TO_MT_P_I = TO_MT_P_I_i, TO_MT_P_ES = TO_MT_P_ES_i, TO_MT_P_EFI = TO_MT_P_EFI_i,
+  TO_MT_P_EFII = TO_MT_P_EFII_i, TO_MT_P_EM = TO_MT_P_EM_i, TO_MT_P_ESI = TO_MT_P_ESI_i,
+  TO_MT_P_ESC = TO_MT_P_ESC_i
+)
+
+# Agregação por município (NIVEL = MUNICIPIO), com o mesmo aggregate() visto em aula (aqui somando várias variáveis de uma vez com cbind)
+SIM_MUNICIPIO <- aggregate(cbind(TO, TORC, TORCR, TO_NN, TO_N, TO_CB_I, TO_CB_N, TO_CB_C, TO_CB_R, TO_CB_O,
+                                  TO_M, TO_F, TO_F_IF, TO_FT, TO_NT, TO_NT_P, TO_NT_T, TO_PNT,
+                                  TONT_B, TONT_PT, TONT_A, TONT_PD, TONT_I,
+                                  TO_MT, TO_MT_DG, TO_MT_PT, TO_MT_AB, TO_MT_42, TO_MT_43, TO_MT_P,
+                                  TO_MT_P_I, TO_MT_P_ES, TO_MT_P_EFI, TO_MT_P_EFII, TO_MT_P_EM, TO_MT_P_ESI, TO_MT_P_ESC)
+                            ~ CODMUNRES, data = indicadores, FUN = sum)
+SIM_MUNICIPIO$NIVEL <- "MUNICIPIO"
+
+# Agregação para o estado inteiro (NIVEL = UF), com o mesmo aggregate(), agrupando por COD_UF (constante para todas as linhas)
+SIM_ESTADO <- aggregate(cbind(TO, TORC, TORCR, TO_NN, TO_N, TO_CB_I, TO_CB_N, TO_CB_C, TO_CB_R, TO_CB_O,
+                               TO_M, TO_F, TO_F_IF, TO_FT, TO_NT, TO_NT_P, TO_NT_T, TO_PNT,
+                               TONT_B, TONT_PT, TONT_A, TONT_PD, TONT_I,
+                               TO_MT, TO_MT_DG, TO_MT_PT, TO_MT_AB, TO_MT_42, TO_MT_43, TO_MT_P,
+                               TO_MT_P_I, TO_MT_P_ES, TO_MT_P_EFI, TO_MT_P_EFII, TO_MT_P_EM, TO_MT_P_ESI, TO_MT_P_ESC)
+                         ~ COD_UF, data = indicadores, FUN = sum)
+names(SIM_ESTADO)[names(SIM_ESTADO) == "COD_UF"] <- "CODMUNRES"
+SIM_ESTADO$NIVEL <- "UF"
+
+# Junta a linha da UF com as linhas dos municípios
+SIM_UF <- rbind(SIM_ESTADO, SIM_MUNICIPIO)
+SIM_UF$ANO <- 2016
+
+# Reordena as colunas conforme "Variáveis - Projeto - Tarefa 7 - SIM.pdf"
+SIM_UF <- SIM_UF[, c("ANO","NIVEL","CODMUNRES","TO","TORC","TORCR","TO_NN","TO_N","TO_CB_I","TO_CB_N",
+                      "TO_CB_C","TO_CB_R","TO_CB_O","TO_M","TO_F","TO_F_IF","TO_FT","TO_NT","TO_NT_P","TO_NT_T",
+                      "TO_PNT","TONT_B","TONT_PT","TONT_A","TONT_PD","TONT_I","TO_MT","TO_MT_DG","TO_MT_PT",
+                      "TO_MT_AB","TO_MT_42","TO_MT_43","TO_MT_P","TO_MT_P_I","TO_MT_P_ES","TO_MT_P_EFI",
+                      "TO_MT_P_EFII","TO_MT_P_EM","TO_MT_P_ESI","TO_MT_P_ESC")]
+
+dim(SIM_UF)
+head(SIM_UF)
 
 # Ao terminar a Tarefa 7 commit com a mensagem "script BDEM - SIM - tarefas 1 a 7" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 8. Exportar o banco de dados com o nome SIM_UF.csv (Exemplo: SIM_RJ.csv)
+
 
 # Ao terminar a Tarefa 8 fazer um commit com o comentário "dados SIM_UF 2016 e script - SIM - tarefas 1 a 8"  e envie para o repositório Projeto_BDEM_2016
 
@@ -311,24 +423,7 @@ dados_sim_2$CAUSABAS <- factor(dados_sim_2$CAUSABAS)
 # Tarefa 2: Manipular o banco de dados e criar o banco de dados ATLAS_UF
 
 # Criar o banco UF_codigo tipo tabela de correspondência
-UF_codigo = data.frame(
-  UF = c("Rondônia","Acre","Amazonas","Roraima","Pará","Amapá","Tocantins",
-         "Maranhão","Piauí","Ceará","Rio Grande do Norte","Paraíba",
-         "Pernambuco","Alagoas","Sergipe","Bahia","Minas Gerais",
-         "Espírito Santo","Rio de Janeiro","São Paulo","Paraná",
-         "Santa Catarina","Rio Grande do Sul","Mato Grosso do Sul",
-         "Mato Grosso","Goiás","Distrito Federal"),
-  
-  SIGLA = c("RO","AC","AM","RR","PA","AP","TO",
-            "MA","PI","CE","RN","PB","PE","AL",
-            "SE","BA","MG","ES","RJ","SP",
-            "PR","SC","RS","MS","MT","GO","DF"),
-  
-  CODUF = c(11,12,13,14,15,16,17,
-            21,22,23,24,25,26,27,
-            28,29,31,32,33,35,
-            41,42,43,50,51,52,53)
-)
+
 
 # Retirar de dados_atlas_1 a linha do Brasil e adicionar (com merge by UF) as colunas de UF_codigo
 
