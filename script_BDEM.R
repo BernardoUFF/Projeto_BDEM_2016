@@ -819,6 +819,71 @@ dados_sinasc_2$KOTELCHUCK <- factor(
 # nova variável: dados_sinasc_2$PEREG: Não: CODMUNNASC igual a CODMUNRES, Sim: CODMUNNASC diferente de CODMUNRES
 # nova variável: dados_sinasc_2$ESTCIV: Sem companheiro: ESTCIVMAE 1, 3 ou 4, Com companheiro: ESTCIVMAE 2 ou 5
 # Ao categorizar as variáveis, garantir que sejam transformadas em tipo fator
+dados_sinasc_2$F_PESO <- ifelse(
+  
+  is.na(dados_sinasc_2$PESO), NA,
+  
+  ifelse(dados_sinasc_2$PESO < 2500, "Baixo peso",
+         
+         ifelse(dados_sinasc_2$PESO < 4000, "Peso normal", "Macrossomia"))
+  
+)
+dados_sinasc_2$F_PESO <- factor(dados_sinasc_2$F_PESO, levels = c("Baixo peso", "Peso normal", "Macrossomia"))
+
+
+dados_sinasc_2$F_IDADE <- ifelse(
+  
+  is.na(dados_sinasc_2$IDADEMAE), NA,
+  
+  ifelse(dados_sinasc_2$IDADEMAE < 15, "Menor que 15",
+         
+         ifelse(dados_sinasc_2$IDADEMAE <= 19, "15 a 19",
+                
+                ifelse(dados_sinasc_2$IDADEMAE <= 24, "20 a 24",
+                       
+                       ifelse(dados_sinasc_2$IDADEMAE <= 29, "25 a 29",
+                              
+                              ifelse(dados_sinasc_2$IDADEMAE <= 34, "30 a 34",
+                                     
+                                     ifelse(dados_sinasc_2$IDADEMAE <= 39, "35 a 39",
+                                            
+                                            ifelse(dados_sinasc_2$IDADEMAE <= 44, "40 a 44",
+                                                   
+                                                   ifelse(dados_sinasc_2$IDADEMAE <= 49, "45 a 49", "50 ou mais"))))))))
+  
+)
+dados_sinasc_2$F_IDADE <- factor(
+  
+  dados_sinasc_2$F_IDADE,
+  
+  levels = c("Menor que 15", "15 a 19", "20 a 24", "25 a 29", "30 a 34", "35 a 39", "40 a 44", "45 a 49", "50 ou mais")
+  
+)
+dados_sinasc_2$F_APGAR5 <- ifelse(
+  
+  is.na(dados_sinasc_2$APGAR5), NA,
+  
+  ifelse(dados_sinasc_2$APGAR5 < 7, "Baixo", "Normal")
+  
+)
+dados_sinasc_2$F_APGAR5 <- factor(dados_sinasc_2$F_APGAR5, levels = c("Baixo", "Normal"))
+dados_sinasc_2$PEREG <- ifelse(dados_sinasc_2$CODMUNNASC == dados_sinasc_2$CODMUNRES, "Não", "Sim")
+dados_sinasc_2$PEREG <- factor(dados_sinasc_2$PEREG, levels = c("Não", "Sim"))
+dados_sinasc_2$ESTCIV <- ifelse(
+  
+  is.na(dados_sinasc_2$ESTCIVMAE), NA,
+  
+  ifelse(
+    
+    dados_sinasc_2$ESTCIVMAE == "Solteira" | dados_sinasc_2$ESTCIVMAE == "Viúva" | dados_sinasc_2$ESTCIVMAE == "Separada judicialmente ou divorciada",
+    
+    "Sem companheiro", "Com companheiro"
+    
+  )
+  
+)
+dados_sinasc_2$ESTCIV <- factor(dados_sinasc_2$ESTCIV, levels = c("Sem companheiro", "Com companheiro"))
+
 
 
 # Ao terminar a Tarefa 7 commit com a mensagem "script BDEM - SINASC - tarefas 1 a 7" e envie para o repositório Projeto_BDEM_2016
