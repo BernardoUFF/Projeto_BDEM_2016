@@ -586,7 +586,10 @@ write.csv(SIM_UF, "SIM_AM.csv",  row.names = FALSE)
 # Verificar se a leitura foi feita corretamente e a estrutura dos dados
 # Por uma questão de padronização coloque todos os nomes das variáveis em letra maiúscula,
 # usando o comando names(dados_sinasc) = toupper(names(dados_sinasc))
-
+dados_sinasc <- read.csv("SINASC_2016.csv", sep = ";", header = TRUE)
+names(dados_sinasc) = toupper(names(dados_sinasc))
+head(dados_sinasc)
+str(dados_sinasc)
 
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SINASC - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
