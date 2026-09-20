@@ -136,123 +136,441 @@ dados_sim_2$CAUSABAS <- factor(dados_sim_2$CAUSABAS)
 # Tarefa 7. Criar um banco de dados, de nome SIM_UF.csv (Exemplo: SIM_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 7 - SIM.pdf”
 # Atenção: a ordem das variáveis do arquivo deve ser respeitada
 
-# Indicador de registro completo nas 87 variáveis originais do SIM (mesmas linhas de dados_sim_2)
-# complete.cases() é a função padrão do R para identificar, de uma só vez, as linhas sem nenhum NA entre várias colunas
-TORC_i <- ifelse(complete.cases(dados_sim[UF == "13", ]), 1, 0)
-
-# Indicador de registro completo nas variáveis selecionadas na Tarefa 2, já com as recodificações de NA da Tarefa 5
-TORCR_i <- ifelse(complete.cases(dados_sim_2[, c("TIPOBITO","IDADE","SEXO","RACACOR","ESC2010","TPMORTEOCO","CAUSABAS")]), 1, 0)
-
-# Decodificação de IDADE: 1o dígito = unidade (0 minuto, 1 hora, 2 dia, 3 mês, 4 ano, 5 idade > 100 anos), 2 últimos dígitos = quantidade
-# Usa-se %/% e %% (divisão inteira e resto) em vez de substr(), pois o dígito da unidade se perderia quando é 0
-unidade_idade <- dados_sim_2$IDADE %/% 100
-valor_idade <- dados_sim_2$IDADE %% 100
-
-# Classificação da causa básica (CAUSABAS) em causa externa (CID-10 V01-Y98) e capítulos de causa natural
-causa <- as.character(dados_sim_2$CAUSABAS)
-letra_causa <- substr(causa, 1, 1)
-num_causa <- as.numeric(substr(causa, 2, 3))
-causa_valida <- !is.na(dados_sim_2$CAUSABAS)
-
-TO_NN_i <- ifelse(causa_valida & (letra_causa == "V" | letra_causa == "W" | letra_causa == "X" |
-                                   (letra_causa == "Y" & !is.na(num_causa) & num_causa <= 98)), 1, 0)
-TO_N_i  <- ifelse(causa_valida & TO_NN_i == 0, 1, 0)
-TO_CB_I_i <- ifelse(TO_N_i == 1 & (letra_causa == "A" | letra_causa == "B"), 1, 0)
-TO_CB_N_i <- ifelse(TO_N_i == 1 & (letra_causa == "C" |
-                                    (letra_causa == "D" & !is.na(num_causa) & (num_causa <= 48 | (num_causa >= 50 & num_causa <= 89)))), 1, 0)
-TO_CB_C_i <- ifelse(TO_N_i == 1 & letra_causa == "I", 1, 0)
-TO_CB_R_i <- ifelse(TO_N_i == 1 & letra_causa == "J", 1, 0)
-TO_CB_O_i <- ifelse(TO_N_i == 1 & TO_CB_I_i == 0 & TO_CB_N_i == 0 & TO_CB_C_i == 0 & TO_CB_R_i == 0, 1, 0)
-
-TO_M_i <- ifelse(!is.na(dados_sim_2$SEXO) & dados_sim_2$SEXO == "Masculino", 1, 0)
-TO_F_i <- ifelse(!is.na(dados_sim_2$SEXO) & dados_sim_2$SEXO == "Feminino", 1, 0)
-TO_F_IF_i <- ifelse(TO_F_i == 1 & !is.na(unidade_idade) & unidade_idade == 4 & valor_idade >= 15 & valor_idade <= 49, 1, 0)
-
-TO_FT_i <- ifelse(!is.na(dados_sim_2$TIPOBITO) & dados_sim_2$TIPOBITO == "Fetal", 1, 0)
-
-TO_NT_i   <- ifelse(!is.na(unidade_idade) & (unidade_idade == 0 | unidade_idade == 1 | (unidade_idade == 2 & valor_idade <= 27)), 1, 0)
-TO_NT_P_i <- ifelse(!is.na(unidade_idade) & (unidade_idade == 0 | unidade_idade == 1 | (unidade_idade == 2 & valor_idade <= 6)), 1, 0)
-TO_NT_T_i <- ifelse(!is.na(unidade_idade) & unidade_idade == 2 & valor_idade >= 7 & valor_idade <= 27, 1, 0)
-TO_PNT_i  <- ifelse(!is.na(unidade_idade) & ((unidade_idade == 2 & valor_idade >= 28) | unidade_idade == 3), 1, 0)
-
-TONT_B_i  <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Branca", 1, 0)
-TONT_PT_i <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Preta", 1, 0)
-TONT_A_i  <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Amarela", 1, 0)
-TONT_PD_i <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Parda", 1, 0)
-TONT_I_i  <- ifelse(TO_NT_i == 1 & !is.na(dados_sim_2$RACACOR) & dados_sim_2$RACACOR == "Indígena", 1, 0)
-
-TO_MT_DG_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "Na gravidez", 1, 0)
-TO_MT_PT_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "No parto", 1, 0)
-TO_MT_AB_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "No abortamento", 1, 0)
-TO_MT_42_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "Até 42 dias após o término do parto", 1, 0)
-TO_MT_43_i <- ifelse(!is.na(dados_sim_2$TPMORTEOCO) & dados_sim_2$TPMORTEOCO == "De 43 dias a 1 ano após o término da gestação", 1, 0)
-TO_MT_i    <- ifelse(TO_MT_DG_i == 1 | TO_MT_PT_i == 1 | TO_MT_AB_i == 1 | TO_MT_42_i == 1 | TO_MT_43_i == 1, 1, 0)
-TO_MT_P_i  <- ifelse(TO_MT_DG_i == 1 | TO_MT_PT_i == 1 | TO_MT_AB_i == 1 | TO_MT_42_i == 1, 1, 0)
-
-TO_MT_P_I_i    <- ifelse(TO_MT_P_i == 1 & !is.na(unidade_idade) & unidade_idade == 4 & valor_idade >= 15 & valor_idade <= 49, 1, 0)
-TO_MT_P_ES_i   <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Sem escolaridade", 1, 0)
-TO_MT_P_EFI_i  <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Fundamental I", 1, 0)
-TO_MT_P_EFII_i <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Fundamental II", 1, 0)
-TO_MT_P_EM_i   <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Médio", 1, 0)
-TO_MT_P_ESI_i  <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Superior incompleto", 1, 0)
-TO_MT_P_ESC_i  <- ifelse(TO_MT_P_i == 1 & !is.na(dados_sim_2$ESC2010) & dados_sim_2$ESC2010 == "Superior completo", 1, 0)
-
-# Banco com um indicador (0/1) por óbito para cada variável a ser somada, com CODMUNRES (município) e COD_UF
-# (igual para todas as linhas, pois todo o banco já é de uma só UF) como colunas de agrupamento do aggregate()
-indicadores <- data.frame(
-  CODMUNRES = dados_sim_2$CODMUNRES,
-  COD_UF = 13,
-  TO = 1, TORC = TORC_i, TORCR = TORCR_i,
-  TO_NN = TO_NN_i, TO_N = TO_N_i, TO_CB_I = TO_CB_I_i, TO_CB_N = TO_CB_N_i,
-  TO_CB_C = TO_CB_C_i, TO_CB_R = TO_CB_R_i, TO_CB_O = TO_CB_O_i,
-  TO_M = TO_M_i, TO_F = TO_F_i, TO_F_IF = TO_F_IF_i,
-  TO_FT = TO_FT_i, TO_NT = TO_NT_i, TO_NT_P = TO_NT_P_i, TO_NT_T = TO_NT_T_i, TO_PNT = TO_PNT_i,
-  TONT_B = TONT_B_i, TONT_PT = TONT_PT_i, TONT_A = TONT_A_i, TONT_PD = TONT_PD_i, TONT_I = TONT_I_i,
-  TO_MT = TO_MT_i, TO_MT_DG = TO_MT_DG_i, TO_MT_PT = TO_MT_PT_i, TO_MT_AB = TO_MT_AB_i,
-  TO_MT_42 = TO_MT_42_i, TO_MT_43 = TO_MT_43_i, TO_MT_P = TO_MT_P_i,
-  TO_MT_P_I = TO_MT_P_I_i, TO_MT_P_ES = TO_MT_P_ES_i, TO_MT_P_EFI = TO_MT_P_EFI_i,
-  TO_MT_P_EFII = TO_MT_P_EFII_i, TO_MT_P_EM = TO_MT_P_EM_i, TO_MT_P_ESI = TO_MT_P_ESI_i,
-  TO_MT_P_ESC = TO_MT_P_ESC_i
-)
-
-# Agregação por município (NIVEL = MUNICIPIO), com o mesmo aggregate() visto em aula (aqui somando várias variáveis de uma vez com cbind)
-SIM_MUNICIPIO <- aggregate(cbind(TO, TORC, TORCR, TO_NN, TO_N, TO_CB_I, TO_CB_N, TO_CB_C, TO_CB_R, TO_CB_O,
-                                  TO_M, TO_F, TO_F_IF, TO_FT, TO_NT, TO_NT_P, TO_NT_T, TO_PNT,
-                                  TONT_B, TONT_PT, TONT_A, TONT_PD, TONT_I,
-                                  TO_MT, TO_MT_DG, TO_MT_PT, TO_MT_AB, TO_MT_42, TO_MT_43, TO_MT_P,
-                                  TO_MT_P_I, TO_MT_P_ES, TO_MT_P_EFI, TO_MT_P_EFII, TO_MT_P_EM, TO_MT_P_ESI, TO_MT_P_ESC)
-                            ~ CODMUNRES, data = indicadores, FUN = sum)
-SIM_MUNICIPIO$NIVEL <- "MUNICIPIO"
-
-# Agregação para o estado inteiro (NIVEL = UF), com o mesmo aggregate(), agrupando por COD_UF (constante para todas as linhas)
-SIM_ESTADO <- aggregate(cbind(TO, TORC, TORCR, TO_NN, TO_N, TO_CB_I, TO_CB_N, TO_CB_C, TO_CB_R, TO_CB_O,
-                               TO_M, TO_F, TO_F_IF, TO_FT, TO_NT, TO_NT_P, TO_NT_T, TO_PNT,
-                               TONT_B, TONT_PT, TONT_A, TONT_PD, TONT_I,
-                               TO_MT, TO_MT_DG, TO_MT_PT, TO_MT_AB, TO_MT_42, TO_MT_43, TO_MT_P,
-                               TO_MT_P_I, TO_MT_P_ES, TO_MT_P_EFI, TO_MT_P_EFII, TO_MT_P_EM, TO_MT_P_ESI, TO_MT_P_ESC)
-                         ~ COD_UF, data = indicadores, FUN = sum)
-names(SIM_ESTADO)[names(SIM_ESTADO) == "COD_UF"] <- "CODMUNRES"
-SIM_ESTADO$NIVEL <- "UF"
-
-# Junta a linha da UF com as linhas dos municípios
-SIM_UF <- rbind(SIM_ESTADO, SIM_MUNICIPIO)
-SIM_UF$ANO <- 2016
-
-# Reordena as colunas conforme "Variáveis - Projeto - Tarefa 7 - SIM.pdf"
-SIM_UF <- SIM_UF[, c("ANO","NIVEL","CODMUNRES","TO","TORC","TORCR","TO_NN","TO_N","TO_CB_I","TO_CB_N",
-                      "TO_CB_C","TO_CB_R","TO_CB_O","TO_M","TO_F","TO_F_IF","TO_FT","TO_NT","TO_NT_P","TO_NT_T",
-                      "TO_PNT","TONT_B","TONT_PT","TONT_A","TONT_PD","TONT_I","TO_MT","TO_MT_DG","TO_MT_PT",
-                      "TO_MT_AB","TO_MT_42","TO_MT_43","TO_MT_P","TO_MT_P_I","TO_MT_P_ES","TO_MT_P_EFI",
-                      "TO_MT_P_EFII","TO_MT_P_EM","TO_MT_P_ESI","TO_MT_P_ESC")]
-
-dim(SIM_UF)
-head(SIM_UF)
 
 # Ao terminar a Tarefa 7 commit com a mensagem "script BDEM - SIM - tarefas 1 a 7" e envie para o repositório Projeto_BDEM_2016
+LETRA = substr(dados_sim_2$CAUSABAS, 1, 1)
+NUM = as.numeric(substr(dados_sim_2$CAUSABAS, 2, 3))
+
+# Base inicial (municípios)
+base = data.frame(CODMUNRES = sort(unique(dados_sim_2$CODMUNRES)))
+
+
+# TO - Total de óbitos
+TO = as.data.frame(table(factor(dados_sim_2$CODMUNRES)))
+
+names(TO) = c("CODMUNRES","TO")
+
+base = merge(base, TO, by = "CODMUNRES", all.x = TRUE)
+
+
+# TORC - Registros completos nas 87 variáveis
+dados_UF = dados_sim[substr(as.character(dados_sim$CODMUNRES),1,2) == "13",]
+
+dados_UF_comp = dados_UF[complete.cases(dados_UF),]
+
+TORC = as.data.frame(table(factor(dados_UF_comp$CODMUNRES,
+                                  levels = base$CODMUNRES)))
+
+names(TORC) = c("CODMUNRES","TORC")
+
+base = merge(base, TORC, by = "CODMUNRES", all.x = TRUE)
+
+
+# TORCR- Total de óbitos com registros completos nas 9 variáveis selecionadas
+dados_UF_1 = dados_sim_1[substr(as.character(dados_sim_1$CODMUNRES),1,2) == "13",]
+
+dados_UF_1_comp = dados_UF_1[complete.cases(dados_UF_1),]
+
+TORCR = as.data.frame(table(factor(dados_UF_1_comp$CODMUNRES, levels = base$CODMUNRES)))
+
+names(TORCR) = c("CODMUNRES","TORCR")
+
+base = merge(base, TORCR, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_NN - Total de óbitos por causas externas (CID-10: V01-Y98)
+tab = table(factor(dados_sim_2$CODMUNRES[LETRA %in% c("V","W","X","Y")], levels = base$CODMUNRES))
+
+TO_NN = as.data.frame(tab)
+names(TO_NN) = c("CODMUNRES","TO_NN")
+
+base = merge(base, TO_NN, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_N - Total de óbitos por causas naturais
+tab = table(factor(dados_sim_2$CODMUNRES[!(LETRA %in% c("V","W","X","Y"))], levels = base$CODMUNRES))
+
+TO_N = as.data.frame(tab)
+names(TO_N) = c("CODMUNRES","TO_N")
+
+base = merge(base, TO_N, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_CB_I - Doenças infecciosas e parasitárias (A00-B99)
+tab = table(factor(dados_sim_2$CODMUNRES[LETRA %in% c("A","B")], levels = base$CODMUNRES))
+
+TO_CB_I = as.data.frame(tab)
+names(TO_CB_I) = c("CODMUNRES","TO_CB_I")
+
+base = merge(base, TO_CB_I, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_CB_N - Neoplasias e doenças do sangue (C00-D48 e D50-D89)
+tab = table(factor(dados_sim_2$CODMUNRES[LETRA == "C" | (LETRA == "D" & NUM <= 48) | (LETRA == "D" & NUM >= 50)
+], levels = base$CODMUNRES))
+
+TO_CB_N = as.data.frame(tab)
+names(TO_CB_N) = c("CODMUNRES","TO_CB_N")
+
+base = merge(base, TO_CB_N, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_CB_C - Doenças do aparelho circulatório (I00-I99)
+tab = table(factor(dados_sim_2$CODMUNRES[LETRA == "I"], levels = base$CODMUNRES))
+
+TO_CB_C = as.data.frame(tab)
+names(TO_CB_C) = c("CODMUNRES","TO_CB_C")
+
+base = merge(base, TO_CB_C, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_CB_R - Doenças do aparelho respiratório (J00-J99)
+tab = table(factor(dados_sim_2$CODMUNRES[LETRA == "J"], levels = base$CODMUNRES))
+
+TO_CB_R = as.data.frame(tab)
+names(TO_CB_R) = c("CODMUNRES","TO_CB_R")
+
+base = merge(base, TO_CB_R, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_CB_O - Outras causas básicas naturais
+tab = table(factor(dados_sim_2$CODMUNRES[!(LETRA %in% c("V","W","X","Y")) & !(LETRA %in% c("A","B","C","I","J")) &
+                                           !(LETRA == "D" & NUM <= 48) & !(LETRA == "D" & NUM >= 50)], levels = base$CODMUNRES))
+
+TO_CB_O = as.data.frame(tab)
+
+names(TO_CB_O) = c("CODMUNRES","TO_CB_O")
+
+base = merge(base, TO_CB_O, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_M - Total de óbitos masculinos
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$SEXO == "Masculino"], levels = base$CODMUNRES))
+
+TO_M = as.data.frame(tab)
+
+names(TO_M) = c("CODMUNRES","TO_M")
+
+base = merge(base, TO_M, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_F - Total de óbitos femininos
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$SEXO == "Feminino"], levels = base$CODMUNRES))
+
+TO_F = as.data.frame(tab)
+
+names(TO_F) = c("CODMUNRES","TO_F")
+
+base = merge(base, TO_F, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_F_IF - Total de óbitos femininos em idade fértil (15 a 49 anos)
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$SEXO == "Feminino" & dados_sim_2$IDADE >= 415 & dados_sim_2$IDADE <= 449],
+                   levels = base$CODMUNRES))
+
+TO_F_IF = as.data.frame(tab)
+
+names(TO_F_IF) = c("CODMUNRES","TO_F_IF")
+
+base = merge(base, TO_F_IF, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_FT - Total de óbitos fetais
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Fetal"],levels = base$CODMUNRES))
+
+TO_FT = as.data.frame(tab)
+
+names(TO_FT) = c("CODMUNRES","TO_FT")
+
+base = merge(base, TO_FT, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_NT - Total de óbitos neonatais (0 a 27 dias)
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" &
+                                           dados_sim_2$IDADE >= 200 & dados_sim_2$IDADE <= 227], levels = base$CODMUNRES))
+
+TO_NT = as.data.frame(tab)
+
+names(TO_NT) = c("CODMUNRES","TO_NT")
+
+base = merge(base, TO_NT, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_NT_P - Total de óbitos neonatais precoces (0 a 6 dias)
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" & dados_sim_2$IDADE >= 200 &
+                                           dados_sim_2$IDADE <= 206], levels = base$CODMUNRES))
+
+TO_NT_P = as.data.frame(tab)
+
+names(TO_NT_P) = c("CODMUNRES","TO_NT_P")
+
+base = merge(base, TO_NT_P, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_NT_T - Total de óbitos neonatais tardios (7 a 27 dias)
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" &
+                                           dados_sim_2$IDADE >= 207 & dados_sim_2$IDADE <= 227], levels = base$CODMUNRES))
+
+TO_NT_T = as.data.frame(tab)
+
+names(TO_NT_T) = c("CODMUNRES","TO_NT_T")
+
+base = merge(base, TO_NT_T, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_PNT - Total de óbitos pós-neonatais (28 dias a 364 dias)
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" &
+                                           dados_sim_2$IDADE >= 228 & dados_sim_2$IDADE <= 311], levels = base$CODMUNRES))
+
+TO_PNT = as.data.frame(tab)
+
+names(TO_PNT) = c("CODMUNRES","TO_PNT")
+
+base = merge(base, TO_PNT, by = "CODMUNRES", all.x = TRUE)
+
+
+# TONT_B - Óbitos neonatais de raça/cor branca
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" &
+                                           dados_sim_2$IDADE >= 200 & dados_sim_2$IDADE <= 227 & dados_sim_2$RACACOR == "Branca"], levels = base$CODMUNRES))
+
+TONT_B = as.data.frame(tab)
+
+names(TONT_B) = c("CODMUNRES","TONT_B")
+
+base = merge(base, TONT_B, by = "CODMUNRES", all.x = TRUE)
+
+
+# TONT_PT - Óbitos neonatais de raça/cor preta
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" & dados_sim_2$IDADE >= 200 &
+                                           dados_sim_2$IDADE <= 227 & dados_sim_2$RACACOR == "Preta"], levels = base$CODMUNRES))
+
+TONT_PT = as.data.frame(tab)
+
+names(TONT_PT) = c("CODMUNRES","TONT_PT")
+
+base = merge(base, TONT_PT, by = "CODMUNRES", all.x = TRUE)
+
+
+# TONT_A - Óbitos neonatais de raça/cor amarela
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" &
+                                           dados_sim_2$IDADE >= 200 & dados_sim_2$IDADE <= 227 & dados_sim_2$RACACOR == "Amarela"],
+                   levels = base$CODMUNRES))
+
+TONT_A = as.data.frame(tab)
+
+names(TONT_A) = c("CODMUNRES","TONT_A")
+
+base = merge(base, TONT_A, by = "CODMUNRES", all.x = TRUE)
+
+
+# TONT_PD - Óbitos neonatais de raça/cor parda
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" &
+                                           dados_sim_2$IDADE >= 200 & dados_sim_2$IDADE <= 227 &
+                                           dados_sim_2$RACACOR == "Parda"], levels = base$CODMUNRES))
+
+TONT_PD = as.data.frame(tab)
+
+names(TONT_PD) = c("CODMUNRES","TONT_PD")
+
+base = merge(base, TONT_PD, by = "CODMUNRES", all.x = TRUE)
+
+
+# TONT_I - Óbitos neonatais de raça/cor indígena
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TIPOBITO == "Não fetal" & dados_sim_2$IDADE >= 200 &
+                                           dados_sim_2$IDADE <= 227 & dados_sim_2$RACACOR == "Indígena"], levels = base$CODMUNRES))
+
+TONT_I = as.data.frame(tab)
+
+names(TONT_I) = c("CODMUNRES","TONT_I")
+
+base = merge(base, TONT_I, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT - Total de óbitos maternos - durante a gestação, parto, abortamento, até 42 dias ou tardio
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez","No parto",
+                                                                       "No abortamento","Até 42 dias após o término do parto", "De 43 dias a 1 ano após o término da gestação")],
+                   levels = base$CODMUNRES))
+
+TO_MT = as.data.frame(tab)
+
+names(TO_MT) = c("CODMUNRES","TO_MT")
+
+base = merge(base, TO_MT, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_DG - Óbitos maternos durante a gestação
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO == "Na gravidez"],levels = base$CODMUNRES))
+
+TO_MT_DG = as.data.frame(tab)
+
+names(TO_MT_DG) = c("CODMUNRES","TO_MT_DG")
+
+base = merge(base, TO_MT_DG, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_PT - Óbitos maternos no parto
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO == "No parto"], levels = base$CODMUNRES))
+
+TO_MT_PT = as.data.frame(tab)
+
+names(TO_MT_PT) = c("CODMUNRES","TO_MT_PT")
+
+base = merge(base, TO_MT_PT, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_AB - Óbitos maternos no abortamento
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO == "No abortamento"],levels = base$CODMUNRES))
+
+TO_MT_AB = as.data.frame(tab)
+
+names(TO_MT_AB) = c("CODMUNRES","TO_MT_AB")
+
+base = merge(base, TO_MT_AB, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_42 - Óbitos maternos até 42 dias após o parto
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO == "Até 42 dias após o término do parto"],
+                   levels = base$CODMUNRES))
+
+TO_MT_42 = as.data.frame(tab)
+
+names(TO_MT_42) = c("CODMUNRES","TO_MT_42")
+
+base = merge(base, TO_MT_42, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_43 - Óbitos maternos tardios (43 dias a 1 ano)
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO == "De 43 dias a 1 ano após o término da gestação"],
+                   levels = base$CODMUNRES))
+
+TO_MT_43 = as.data.frame(tab)
+
+names(TO_MT_43) = c("CODMUNRES","TO_MT_43")
+
+base = merge(base, TO_MT_43, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P - Total de óbitos maternos precoces
+# Soma dos óbitos durante a gestação, parto, abortamento e até 42 dias após o parto
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez", "No parto",
+                                                                       "No abortamento", "Até 42 dias após o término do parto")], levels = base$CODMUNRES))
+
+TO_MT_P = as.data.frame(tab)
+
+names(TO_MT_P) = c("CODMUNRES","TO_MT_P")
+
+base = merge(base, TO_MT_P, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_I - Total de óbitos maternos precoces de mulheres em idade fértil - Idade fértil: 15 a 49 anos
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez", "No parto",
+                                                                       "No abortamento", "Até 42 dias após o término do parto") & dados_sim_2$IDADE >= 415 &
+                                           dados_sim_2$IDADE <= 449], levels = base$CODMUNRES))
+
+TO_MT_P_I = as.data.frame(tab)
+
+names(TO_MT_P_I) = c("CODMUNRES","TO_MT_P_I")
+
+base = merge(base, TO_MT_P_I, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_ES - Óbitos maternos precoces de mulheres sem escolaridade
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez",
+                                                                       "No parto", "No abortamento", "Até 42 dias após o término do parto") &
+                                           dados_sim_2$ESC2010 == "Sem escolaridade"], levels = base$CODMUNRES))
+
+TO_MT_P_ES = as.data.frame(tab)
+
+names(TO_MT_P_ES) = c("CODMUNRES","TO_MT_P_ES")
+
+base = merge(base, TO_MT_P_ES, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_EFI - Óbitos maternos precoces de mulheres com Fundamental I
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez",
+                                                                       "No parto", "No abortamento", "Até 42 dias após o término do parto") &
+                                           dados_sim_2$ESC2010 == "Fundamental I (1ª a 4ª série)"], levels = base$CODMUNRES))
+
+TO_MT_P_EFI = as.data.frame(tab)
+
+names(TO_MT_P_EFI) = c("CODMUNRES","TO_MT_P_EFI")
+
+base = merge(base, TO_MT_P_EFI, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_EFII - Óbitos maternos precoces de mulheres com Fundamental II
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez",
+                                                                       "No parto", "No abortamento", "Até 42 dias após o término do parto") &
+                                           dados_sim_2$ESC2010 == "Fundamental II (5ª a 8ª série)"], levels = base$CODMUNRES))
+
+TO_MT_P_EFII = as.data.frame(tab)
+
+names(TO_MT_P_EFII) = c("CODMUNRES","TO_MT_P_EFII")
+
+base = merge(base, TO_MT_P_EFII, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_EM - Óbitos maternos precoces de mulheres com escolaridade média
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez", "No parto",
+                                                                       "No abortamento", "Até 42 dias após o término do parto") &
+                                           dados_sim_2$ESC2010 == "Médio (antigo 2º grau)"], levels = base$CODMUNRES))
+
+TO_MT_P_EM = as.data.frame(tab)
+
+names(TO_MT_P_EM) = c("CODMUNRES","TO_MT_P_EM")
+
+base = merge(base, TO_MT_P_EM, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_ESI - Óbitos maternos precoces de mulheres com superior incompleto
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez", "No parto",
+                                                                       "No abortamento", "Até 42 dias após o término do parto") &
+                                           dados_sim_2$ESC2010 == "Superior incompleto"], levels = base$CODMUNRES))
+
+TO_MT_P_ESI = as.data.frame(tab)
+
+names(TO_MT_P_ESI) = c("CODMUNRES","TO_MT_P_ESI")
+
+base = merge(base, TO_MT_P_ESI, by = "CODMUNRES", all.x = TRUE)
+
+
+# TO_MT_P_ESC - Óbitos maternos precoces de mulheres com escolaridade superior completa
+tab = table(factor(dados_sim_2$CODMUNRES[dados_sim_2$TPMORTEOCO %in% c("Na gravidez", "No parto",
+                                                                       "No abortamento", "Até 42 dias após o término do parto") &
+                                           dados_sim_2$ESC2010 == "Superior completo"],levels = base$CODMUNRES))
+
+TO_MT_P_ESC = as.data.frame(tab)
+
+names(TO_MT_P_ESC) = c("CODMUNRES","TO_MT_P_ESC")
+
+base = merge(base, TO_MT_P_ESC, by = "CODMUNRES", all.x = TRUE)
+
+
+# código da UF
+linha_estado = data.frame(matrix(ncol = ncol(base), nrow = 1))
+names(linha_estado) = names(base)
+
+linha_estado[, -1] = colSums(base[, -1])
+
+linha_estado$CODMUNRES = 13
+
+# Banco de dados final para o Acre
+SIM_UF = rbind(linha_estado, base)
+
+SIM_UF$NIVEL = c("UF", rep("MUNICIPIO", nrow(SIM_UF)-1))
+SIM_UF$ANO = 2016
+
+SIM_UF = SIM_UF[, c("ANO","NIVEL","CODMUNRES", names(SIM_UF)[!names(SIM_UF) %in% c("ANO","NIVEL","CODMUNRES")])]
+SIM_UF$CODMUNRES = as.character(SIM_UF$CODMUNRES)
+
+# Verificando o banco final
+str(SIM_UF)
+head(SIM_UF)
+dim(SIM_UF)
 
 
 # Tarefa 8. Exportar o banco de dados com o nome SIM_UF.csv (Exemplo: SIM_RJ.csv)
-write.csv(SIM_UF, "SIM_AM.csv", row.names = FALSE)
+write.csv(SIM_UF, "SIM_AM.csv",  row.names = FALSE)
 
 # Ao terminar a Tarefa 8 fazer um commit com o comentário "dados SIM_UF 2016 e script - SIM - tarefas 1 a 8"  e envie para o repositório Projeto_BDEM_2016
 
@@ -423,7 +741,24 @@ write.csv(SIM_UF, "SIM_AM.csv", row.names = FALSE)
 # Tarefa 2: Manipular o banco de dados e criar o banco de dados ATLAS_UF
 
 # Criar o banco UF_codigo tipo tabela de correspondência
-
+UF_codigo = data.frame(
+  UF = c("Rondônia","Acre","Amazonas","Roraima","Pará","Amapá","Tocantins",
+         "Maranhão","Piauí","Ceará","Rio Grande do Norte","Paraíba",
+         "Pernambuco","Alagoas","Sergipe","Bahia","Minas Gerais",
+         "Espírito Santo","Rio de Janeiro","São Paulo","Paraná",
+         "Santa Catarina","Rio Grande do Sul","Mato Grosso do Sul",
+         "Mato Grosso","Goiás","Distrito Federal"),
+  
+  SIGLA = c("RO","AC","AM","RR","PA","AP","TO",
+            "MA","PI","CE","RN","PB","PE","AL",
+            "SE","BA","MG","ES","RJ","SP",
+            "PR","SC","RS","MS","MT","GO","DF"),
+  
+  CODUF = c(11,12,13,14,15,16,17,
+            21,22,23,24,25,26,27,
+            28,29,31,32,33,35,
+            41,42,43,50,51,52,53)
+)
 
 # Retirar de dados_atlas_1 a linha do Brasil e adicionar (com merge by UF) as colunas de UF_codigo
 
