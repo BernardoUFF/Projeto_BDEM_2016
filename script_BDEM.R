@@ -1604,7 +1604,44 @@ nrow(sidra_4)
 
 
 # Tarefa 4: Criar um banco de dados, de nome SIDRA_UF.csv (Exemplo: SIDRA_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 4 - SIDRA.pdf”
-
+faixa_15    <- c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos")
+faixa_15_49 <- c("15 a 19 anos", "20 a 24 anos", "25 a 29 anos", "30 a 34 anos", "35 a 39 anos", "40 a 44 anos", "45 a 49 anos")
+faixa_50    <- c("50 a 54 anos", "55 a 59 anos", "60 a 64 anos", "65 a 69 anos", "70 a 74 anos", "75 a 79 anos", "80 a 89 anos", "90 a 99 anos", "100 anos ou mais")
+sidra_4$POP_15 <- ifelse(sidra_4$F_IDADE %in% faixa_15, sidra_4$POP, 0)
+sidra_4$POP_15_49 <- ifelse(sidra_4$F_IDADE %in% faixa_15_49, sidra_4$POP, 0)
+sidra_4$POP_50 <- ifelse(sidra_4$F_IDADE %in% faixa_50, sidra_4$POP, 0)
+sidra_4$POPF_15 <- ifelse(sidra_4$F_IDADE %in% faixa_15, sidra_4$POPF, 0)
+sidra_4$POPF_15_49 <- ifelse(sidra_4$F_IDADE %in% faixa_15_49, sidra_4$POPF, 0)
+sidra_4$POPF_50 <- ifelse(sidra_4$F_IDADE %in% faixa_50, sidra_4$POPF, 0)
+idade_municipio <- aggregate(cbind(POP_15, POP_15_49, POP_50, POPF_15, POPF_15_49, POPF_50) ~ CODMUNRES, data = sidra_4, FUN = sum)
+names(idade_municipio) <- c("CODMUNRES", "POPRC_15", "POPRC_15_49", "POPRC_50", "POPRC_F_15", "POPRC_F_15_49", "POPRC_F_50")
+linha_estado <- data.frame(
+  CODMUNRES = "13",
+  POPRE_T = sidra_1$POPRE_T[sidra_1$CODMUNRES == 13],
+  POPRC_T = sidra_2$POPRC_T[sidra_2$CODMUNRES == 13],
+  POPRC_M = sidra_2$POPRC_M[sidra_2$CODMUNRES == 13],
+  POPRC_F = sidra_2$POPRC_F[sidra_2$CODMUNRES == 13],
+  POPRC_15 = sum(sidra_3$POP[sidra_3$F_IDADE %in% faixa_15]),
+  POPRC_15_49 = sum(sidra_3$POP[sidra_3$F_IDADE %in% faixa_15_49]),
+  POPRC_50 = sum(sidra_3$POP[sidra_3$F_IDADE %in% faixa_50]),
+  POPRC_F_15 = sum(sidra_3$POPF[sidra_3$F_IDADE %in% faixa_15]),
+  POPRC_F_15_49 = sum(sidra_3$POPF[sidra_3$F_IDADE %in% faixa_15_49]),
+  POPRC_F_50 = sum(sidra_3$POPF[sidra_3$F_IDADE %in% faixa_50])
+)
+municipios <- merge(sidra_1[sidra_1$CODMUNRES != 13, c("CODMUNRES", "POPRE_T")],
+                    sidra_2[sidra_2$CODMUNRES != 13, c("CODMUNRES", "POPRC_T", "POPRC_M", "POPRC_F")],
+                    by = "CODMUNRES", all = TRUE)
+municipios$CODMUNRES <- as.character(municipios$CODMUNRES)
+idade_municipio$CODMUNRES <- as.character(idade_municipio$CODMUNRES)
+municipios <- merge(municipios, idade_municipio, by = "CODMUNRES", all = TRUE)
+SIDRA_UF <- rbind(linha_estado, municipios)
+SIDRA_UF$NIVEL <- c("UF", rep("MUNICIPIO", nrow(SIDRA_UF) - 1))
+SIDRA_UF$ANO <- 2016
+SIDRA_UF <- SIDRA_UF[, c("ANO", "NIVEL", "CODMUNRES", "POPRE_T", "POPRC_T", "POPRC_M", "POPRC_F",
+                         "POPRC_15", "POPRC_15_49", "POPRC_50", "POPRC_F_15", "POPRC_F_15_49", "POPRC_F_50")]
+str(SIDRA_UF)
+head(SIDRA_UF)
+dim(SIDRA_UF)
 # Ao terminar a Tarefa 4 commit com a mensagem "script BDEM - SIDRA - tarefas 1 a 4" e envie para o repositório Projeto_BDEM_2016
 
 
