@@ -1860,9 +1860,19 @@ BDEM_AM <- merge(BDEM_AM, sinisa_uf, by = c("ANO", "NIVEL", "CODMUNRES"), all.x 
 # TMN_P: Taxa de mortalidade neonatal precoce
 # TMN_T: Taxa de mortalidade neonatal tardia
 # TMI: Taxa de mortalidade infantil
-
+BDEM_AM$TFG    <- round((BDEM_AM$TN / BDEM_AM$POPRC_F_15_49) * 1000, 2)
+BDEM_AM$TMG    <- round((BDEM_AM$TO / BDEM_AM$POPRE_T) * 1000, 2)
+BDEM_AM$RMM    <- round((BDEM_AM$TO_MT_P / BDEM_AM$TN) * 100000, 2)
+BDEM_AM$TMM    <- round((BDEM_AM$TO_MT / BDEM_AM$TN) * 100000, 2)
+BDEM_AM$TMM_P  <- round((BDEM_AM$TO_MT_42 / BDEM_AM$TN) * 100000, 2)
+BDEM_AM$TMN    <- round((BDEM_AM$TO_NT / BDEM_AM$TN) * 1000, 2)
+BDEM_AM$TMN_P  <- round((BDEM_AM$TO_NT_P / BDEM_AM$TN) * 1000, 2)
+BDEM_AM$TMN_T  <- round((BDEM_AM$TO_NT_T / BDEM_AM$TN) * 1000, 2)
+BDEM_AM$TMI    <- round(((BDEM_AM$TO_NT + BDEM_AM$TO_PNT) / BDEM_AM$TN) * 1000, 2)
 # Conferir o banco BDEM_UF após inserção dos indicadores
-
+str(BDEM_AM)
+head(BDEM_AM)
+dim(BDEM_AM)
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - BDEM - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
 
