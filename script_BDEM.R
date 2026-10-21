@@ -1824,12 +1824,29 @@ write.csv(SINISA_UF, "SINISA_AM.csv", row.names = FALSE)
 
 # Tarefa 1: Agregar os arquivos SIDRA_UF, ATLAS_UF, SINASC_UF, SIM_UF, SINISA_UF no banco BDEM_UF (Exemplo: BDEM_RJ)
 # Leitura dos 5 bancos de dados expeortados das etapas anteriores
-
+sim_uf    <- read.csv("SIM_AM.csv", header = TRUE)
+sinasc_uf <- read.csv("SINASC_AM.csv", header = TRUE)
+sidra_uf  <- read.csv("SIDRA_AM.csv", header = TRUE)
+atlas_uf  <- read.csv("ATLAS_AM.csv", header = TRUE)
+sinisa_uf <- read.csv("SINISA_AM.csv", header = TRUE)
 # Agregação dos bancos
 # Lembre-se que SIDRA e ATLAS tem CODMUNRES com 7 dígitos e SINASC, SIM e SINISA com 6 dígitos
 # Além disso dentro do merge all = TRUE garante a manutenção de qualquer município presente em um dos bancos envolvidos no merge
+sidra_uf$CODMUNRES <- ifelse(nchar(as.character(sidra_uf$CODMUNRES)) == 7, 
+                             substr(as.character(sidra_uf$CODMUNRES), 1, 6), 
+                             as.character(sidra_uf$CODMUNRES))
 
+atlas_uf$CODMUNRES <- ifelse(nchar(as.character(atlas_uf$CODMUNRES)) == 7, 
+                             substr(as.character(atlas_uf$CODMUNRES), 1, 6), 
+                             as.character(atlas_uf$CODMUNRES))
 
+sim_uf$CODMUNRES    <- as.character(sim_uf$CODMUNRES)
+sinasc_uf$CODMUNRES <- as.character(sinasc_uf$CODMUNRES)
+sinisa_uf$CODMUNRES <- as.character(sinisa_uf$CODMUNRES)
+BDEM_AM <- merge(sim_uf, sinasc_uf, by = c("ANO", "NIVEL", "CODMUNRES"), all = TRUE)
+BDEM_AM <- merge(BDEM_AM, sidra_uf, by = c("ANO", "NIVEL", "CODMUNRES"), all = TRUE)
+BDEM_AM <- merge(BDEM_AM, atlas_uf, by = c("ANO", "NIVEL", "CODMUNRES"), all = TRUE)
+BDEM_AM <- merge(BDEM_AM, sinisa_uf, by = c("ANO", "NIVEL", "CODMUNRES"), all.x = TRUE)
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - BDEM - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
 
